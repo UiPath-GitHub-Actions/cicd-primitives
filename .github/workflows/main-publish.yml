@@ -1,0 +1,228 @@
+name: Main CiCd Workflow
+run-name: Generic CiCd pipeline
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      folder_uat:
+        required: true
+        type: string
+      folder_prd:
+        required: true
+        type: string
+    secrets:
+      CLIENT_ID:
+        required: true
+      CLIENT_SECRET:
+        required: true
+jobs:
+  Get-CiCd-Primitives:
+    runs-on: uipath-cli
+    steps:
+      - name: Checkout the latest version of the CiCd primitives
+        uses: actions/checkout@v3
+        with:
+           repository: Test-Organisation-FCC/cicd-primitives
+           ref: main
+           path: CiCd
+      - name: Display SHA of commit
+        shell: pwsh
+        run: Write-Host ( "Change in branch? ${{ github.head_ref || github.ref_name }}" + " ${{github.sha}}".Substring(0, 8) )
+  Prepare-Environment:
+    needs: Get-CiCd-Primitives
+    runs-on: uipath-cli
+    outputs:
+      tenantName: ${{ steps.envvars.outputs.tenantName }}
+      folderName: ${{ steps.envvars.outputs.folderName }}
+      baseurl: ${{ steps.baseurl.outputs.baseurl }}
+    steps:
+      - name: Check that the CLI is installed
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          uipcli --version
+      - name: List files in the folder
+        continue-on-error: false
+        shell: pwsh
+        run: dir
+      - name: Display project and environment name
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $processName = GetProcessName
+          Write-Host "Building $processName for environment: ${{ inputs.environment }}"
+      - name: Get environment variables
+        id: envvars
+        shell: pwsh
+        run: |
+          if ( "${{ inputs.environment }}" -eq "uat")
+          {
+            $tenantName = "${{ vars.TENANT_NAME_UAT }}"
+            $folderName = "${{ inputs.folder_uat }}"
+          }
+          if ( "${{ inputs.environment }}" -eq "prd")
+          {
+            $tenantName = "${{ vars.TENANT_NAME_PRD }}"
+            $folderName = "${{ inputs.folder_prd }}"
+          }
+          "TENANT_NAME=$tenantName" >> $env:GITHUB_ENV
+          "tenantName=$tenantName" >> $env:GITHUB_OUTPUT
+          "folderName=$folderName" >> $env:GITHUB_OUTPUT
+          Write-Host "Working on Organisation: ${{ vars.ORG_NAME }} Tenant: ${tenantName} Folder: $folderName"
+      - name: Get Base Orchestrator Url
+        id: baseurl
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $baseurl = GetUrlOrchestratorApiBaseCloud -baseUrl "${{ vars.BASE_URL }}" -organizationId "${{ vars.ORG_NAME }}" -tenantName "${{ env.TENANT_NAME }}"
+          "baseurl=$baseurl" >> $env:GITHUB_OUTPUT
+  Run-Checks-And-Workflow-Analyzer:
+    needs: [Prepare-Environment]
+    runs-on: uipath-cli
+    outputs:
+      finalVersionProcess: ${{ steps.finalVersionProcess.outputs.finalVersionProcess }}
+    env:
+      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+    steps:
+      - name: Authenticate and get token
+        id: beartok
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $bearTok = AuthenticateToCloudAndGetBearerTokenClientCredentials -clientId "${{ secrets.CLIENT_ID }}" -clientSecret "${{ secrets.CLIENT_SECRET }}" -scopes "${{ vars.SCOPES }}" -tenantName "${{ env.TENANT_NAME }}" -identityServer "${{ vars.IDENTITY_SERVER }}"
+          "BEAR_TOK=$beartok" >> $env:GITHUB_ENV
+      - name: Get Latest version of process
+        id: finalVersionProcess
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $enforceStrictVersioning = ("${{ vars.ENFORCE_STRICT_VERSIONING }}".Trim() -eq "YES")
+          $finalVersionProcess = GetFinalVersionProcessFolderFeed -orchestratorApiBaseUrl "${{ env.BASE_URL }}" -folderName "${{ env.FOLDER_NAME }}" -bearerToken "${{ env.BEAR_TOK }}" -enforceStrictVersioning $enforceStrictVersioning
+          "FINAL_VERSION_PROCESS=$finalVersionProcess" >> $env:GITHUB_ENV
+          "finalVersionProcess=$finalVersionProcess" >> $env:GITHUB_OUTPUT
+      - name: Run workflow analyzer
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $BASE_URL = "${{ vars.BASE_URL }}"
+          uipcli package analyze "$pwd\project.json" --analyzerTraceLevel "Error" --orchestratorUrl "$($BASE_URL)" --orchestratorTenant "${{ env.TENANT_NAME }}" --orchestratorAccountForApp  "${{ vars.ORG_NAME }}" --orchestratorApplicationId  "${{ secrets.CLIENT_ID }}" --orchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --orchestratorApplicationScope "${{ vars.SCOPES }}"
+  Build-RPA-And-Test-Packages:
+    needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer]
+    runs-on: uipath-cli
+    outputs:
+      nugetPath: ${{ steps.nugetPath.outputs.nugetPath }}
+      nugetTestPath: ${{ steps.nugetTestPath.outputs.nugetTestPath }}
+    env:
+      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+      FINAL_VERSION_PROCESS: ${{needs.Run-Checks-And-Workflow-Analyzer.outputs.finalVersionProcess}}
+    steps:
+      - name: Authenticate and get token
+        id: beartok
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $bearTok = AuthenticateToCloudAndGetBearerTokenClientCredentials -clientId "${{ secrets.CLIENT_ID }}" -clientSecret "${{ secrets.CLIENT_SECRET }}" -scopes "${{ vars.SCOPES }}" -tenantName "${{ env.TENANT_NAME }}" -identityServer "${{ vars.IDENTITY_SERVER }}"
+          "BEAR_TOK=$beartok" >> $env:GITHUB_ENV
+      - name: Build Package
+        id: nugetPath
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $shortSHA = "${{github.sha}}".Substring(0, 7)
+          $oldFolder = $pwd
+          cd "C:\Program Files\UiPath\Studio"
+          .\UiPath.Studio.CommandLine.exe publish -p "$oldFolder\project.json" -g Custom -f "$oldFolder" -v ${{ env.FINAL_VERSION_PROCESS }} -t 1200 -n "Generated by CICD $shortSHA at ${{ github.event.head_commit.timestamp }} : ${{ github.event.head_commit.message }}"
+          cd $oldFolder
+          $processName = GetProcessName
+          $nugetPath = "$processName.${{ env.FINAL_VERSION_PROCESS }}.nupkg"
+          "nugetPath=$nugetPath" >> $env:GITHUB_OUTPUT
+      - name: Build Test Package
+        id: nugetTestPath
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          uipcli package pack "$pwd\project.json" -o "$pwd" --outputType Tests -v ${{ env.FINAL_VERSION_PROCESS }} --libraryOrchestratorUrl ${{ env.BASE_URL }} --libraryOrchestratorApplicationId "${{ secrets.CLIENT_ID }}" --libraryOrchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --libraryOrchestratorApplicationScope "${{ vars.SCOPES }}" --libraryOrchestratorTenant "${{ env.TENANT_NAME }}" --libraryOrchestratorFolder "${{ env.FOLDER_NAME }}"
+          $processName = GetProcessName
+          $nugetTestPath = "${processName}_Tests.${{ env.FINAL_VERSION_PROCESS }}.nupkg"
+          "nugetTestPath=$nugetTestPath" >> $env:GITHUB_OUTPUT
+  Upload-Packages:
+    needs: [Prepare-Environment, Build-RPA-And-Test-Packages]
+    runs-on: uipath-cli
+    env:
+      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+      NUGET_PATH: ${{needs.Build-RPA-And-Test-Packages.outputs.nugetPath}}
+      NUGET_TEST_PATH: ${{needs.Build-RPA-And-Test-Packages.outputs.nugetTestPath}}
+    steps:
+      - name: Authenticate and get token
+        id: beartok
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $bearTok = AuthenticateToCloudAndGetBearerTokenClientCredentials -clientId "${{ secrets.CLIENT_ID }}" -clientSecret "${{ secrets.CLIENT_SECRET }}" -scopes "${{ vars.SCOPES }}" -tenantName "${{ env.TENANT_NAME }}" -identityServer "${{ vars.IDENTITY_SERVER }}"
+          "BEAR_TOK=$beartok" >> $env:GITHUB_ENV
+      - name: Upload package to Orchestrator
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -folderName ${{ env.FOLDER_NAME }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_PATH }}
+      - name: Upload test package to Orchestrator
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -folderName ${{ env.FOLDER_NAME }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_TEST_PATH }}
+  Run-Tests:
+    needs: [Prepare-Environment, Build-RPA-And-Test-Packages, Upload-Packages]
+    runs-on: uipath-cli
+    env:
+      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+    steps:
+      - name: Run Test Process
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $processName = GetProcessName
+          uipcli test run "${{ vars.BASE_URL }}" "${{ env.TENANT_NAME }}" --accountForApp "${{ vars.ORG_NAME }}" --applicationId "${{ secrets.CLIENT_ID }}" --applicationSecret "${{ secrets.CLIENT_SECRET }}" --applicationScope "${{ vars.SCOPES }}" -s "${processName}_TestSet" -o "${{ env.FOLDER_NAME }}" --out uipath -r "$pwd\test_result.json"
+          exit InterpretTestResults -testResults "$pwd\test_result.json"
+  Bump-Process-Version:
+    needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer, Build-RPA-And-Test-Packages, Run-Tests]
+    runs-on: uipath-cli
+    env:
+      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+      FINAL_VERSION_PROCESS: ${{needs.Run-Checks-And-Workflow-Analyzer.outputs.finalVersionProcess}}
+      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+    steps:
+      - name: Authenticate and get token
+        id: beartok
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $bearTok = AuthenticateToCloudAndGetBearerTokenClientCredentials -clientId "${{ secrets.CLIENT_ID }}" -clientSecret "${{ secrets.CLIENT_SECRET }}" -scopes "${{ vars.SCOPES }}" -tenantName "${{ env.TENANT_NAME }}" -identityServer "${{ vars.IDENTITY_SERVER }}"
+          "BEAR_TOK=$beartok" >> $env:GITHUB_ENV
+      - name: Get Folder ID from Name
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $folderId = GetFolderId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderName "${{ env.FOLDER_NAME }}"
+          "FOLDER_ID=$folderId" >> $env:GITHUB_ENV
+      - name: Get Process ID from Name
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          $processName = GetProcessName; $processId = GetProcessId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId "${{ env.FOLDER_ID }}" -processName "$processName"
+          "PROCESS_ID=$processId" >> $env:GITHUB_ENV
+      - name: Bump Process Version to the Latest
+        shell: pwsh
+        run: |
+          . .\CiCd\CiCdFunctions.ps1
+          BumpProcessVersion -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId ${{ env.FOLDER_ID }} -processId ${{ env.PROCESS_ID }} -processVersion ${{ env.FINAL_VERSION_PROCESS }}
