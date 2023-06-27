@@ -60,7 +60,7 @@ jobs:
           if ( "${{ inputs.environment }}" -eq "uat")
           {
             $tenantName = "${{ vars.TENANT_NAME_UAT }}"
-            $folderName = "${{ inputs.folder_uat }}"
+            $folderName = "${{ inputs.folder_dev }}"
           }
           if ( "${{ inputs.environment }}" -eq "prd")
           {
