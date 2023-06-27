@@ -6,7 +6,7 @@ on:
       environment:
         required: true
         type: string
-      folder_uat:
+      folder_dev:
         required: true
         type: string
       folder_prd:
