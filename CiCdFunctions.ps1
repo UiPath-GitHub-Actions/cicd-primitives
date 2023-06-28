@@ -73,6 +73,7 @@ function GetProcessId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [st
 
 function GetFolderFeedId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$folderId) {
     $result = GetOrchApi -bearerToken $bearerToken -uri "$($orchestratorApiBaseUrl)/api/PackageFeeds/GetFolderFeed?folderId=$($folderId)"
+    if ($null -eq $result) {$result = "1.0.0"}
     return $result.ToString()
 }
 
