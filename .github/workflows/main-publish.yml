@@ -109,7 +109,7 @@ jobs:
         run: |
           . .\CiCd\CiCdFunctions.ps1
           $BASE_URL = "${{ vars.BASE_URL }}"
-          uipcli package analyze "$pwd\project.json" --analyzerTraceLevel "Error" --orchestratorUrl "$($BASE_URL)" --orchestratorTenant "${{ env.TENANT_NAME }}" --orchestratorAccountForApp  "${{ vars.ORG_NAME }}" --orchestratorApplicationId  "${{ secrets.CLIENT_ID }}" --orchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --orchestratorApplicationScope "${{ vars.SCOPES }}"
+          #uipcli package analyze "$pwd\project.json" --analyzerTraceLevel "Error" --orchestratorUrl "$($BASE_URL)" --orchestratorTenant "${{ env.TENANT_NAME }}" --orchestratorAccountForApp  "${{ vars.ORG_NAME }}" --orchestratorApplicationId  "${{ secrets.CLIENT_ID }}" --orchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --orchestratorApplicationScope "${{ vars.SCOPES }}"
   Build-RPA-And-Test-Packages:
     needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer]
     runs-on: uipath-cli
