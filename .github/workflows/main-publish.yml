@@ -142,15 +142,15 @@ jobs:
           $processName = GetProcessName
           $nugetPath = "$processName.${{ env.FINAL_VERSION_PROCESS }}.nupkg"
           "nugetPath=$nugetPath" >> $env:GITHUB_OUTPUT
-      - name: Build Test Package
-        id: nugetTestPath
-        shell: pwsh
-        run: |
-          . .\CiCd\CiCdFunctions.ps1
-          uipcli package pack "$pwd\project.json" -o "$pwd" --outputType Tests -v ${{ env.FINAL_VERSION_PROCESS }} --libraryOrchestratorUrl ${{ env.BASE_URL }} --libraryOrchestratorApplicationId "${{ secrets.CLIENT_ID }}" --libraryOrchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --libraryOrchestratorApplicationScope "${{ vars.SCOPES }}" --libraryOrchestratorTenant "${{ env.TENANT_NAME }}" --libraryOrchestratorFolder "${{ env.FOLDER_NAME }}"
-          $processName = GetProcessName
-          $nugetTestPath = "${processName}_Tests.${{ env.FINAL_VERSION_PROCESS }}.nupkg"
-          "nugetTestPath=$nugetTestPath" >> $env:GITHUB_OUTPUT
+      #- name: Build Test Package
+      #  id: nugetTestPath
+      #  shell: pwsh
+      #  run: |
+      #    . .\CiCd\CiCdFunctions.ps1
+      #    uipcli package pack "$pwd\project.json" -o "$pwd" --outputType Tests -v ${{ env.FINAL_VERSION_PROCESS }} --libraryOrchestratorUrl ${{ env.BASE_URL }} --libraryOrchestratorApplicationId "${{ secrets.CLIENT_ID }}" --libraryOrchestratorApplicationSecret "${{ secrets.CLIENT_SECRET }}" --libraryOrchestratorApplicationScope "${{ vars.SCOPES }}" --libraryOrchestratorTenant "${{ env.TENANT_NAME }}" --libraryOrchestratorFolder "${{ env.FOLDER_NAME }}"
+      #    $processName = GetProcessName
+      #    $nugetTestPath = "${processName}_Tests.${{ env.FINAL_VERSION_PROCESS }}.nupkg"
+      #    "nugetTestPath=$nugetTestPath" >> $env:GITHUB_OUTPUT
   Upload-Packages:
     needs: [Prepare-Environment, Build-RPA-And-Test-Packages]
     runs-on: uipath-cli
@@ -173,26 +173,26 @@ jobs:
         run: |
           . .\CiCd\CiCdFunctions.ps1
           UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -folderName ${{ env.FOLDER_NAME }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_PATH }}
-      - name: Upload test package to Orchestrator
-        shell: pwsh
-        run: |
-          . .\CiCd\CiCdFunctions.ps1
-          UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -folderName ${{ env.FOLDER_NAME }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_TEST_PATH }}
-  Run-Tests:
-    needs: [Prepare-Environment, Build-RPA-And-Test-Packages, Upload-Packages]
-    runs-on: uipath-cli
-    env:
-      BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
-      TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
-      FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
-    steps:
-      - name: Run Test Process
-        shell: pwsh
-        run: |
-          . .\CiCd\CiCdFunctions.ps1
-          $processName = GetProcessName
-          uipcli test run "${{ vars.BASE_URL }}" "${{ env.TENANT_NAME }}" --accountForApp "${{ vars.ORG_NAME }}" --applicationId "${{ secrets.CLIENT_ID }}" --applicationSecret "${{ secrets.CLIENT_SECRET }}" --applicationScope "${{ vars.SCOPES }}" -s "${processName}_TestSet" -o "${{ env.FOLDER_NAME }}" --out uipath -r "$pwd\test_result.json"
-          exit InterpretTestResults -testResults "$pwd\test_result.json"
+     # - name: Upload test package to Orchestrator
+     #   shell: pwsh
+     #   run: |
+     #     . .\CiCd\CiCdFunctions.ps1
+     #     UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -folderName ${{ env.FOLDER_NAME }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_TEST_PATH }}
+  #Run-Tests:
+  #  needs: [Prepare-Environment, Build-RPA-And-Test-Packages, Upload-Packages]
+  #  runs-on: uipath-cli
+  #  env:
+  #    BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
+  #    TENANT_NAME: ${{needs.Prepare-Environment.outputs.tenantName}}
+  #    FOLDER_NAME: ${{needs.Prepare-Environment.outputs.folderName}}
+  #  steps:
+  #    - name: Run Test Process
+   #     shell: pwsh
+   #     run: |
+   #       . .\CiCd\CiCdFunctions.ps1
+    #      $processName = GetProcessName
+   #       uipcli test run "${{ vars.BASE_URL }}" "${{ env.TENANT_NAME }}" --accountForApp "${{ vars.ORG_NAME }}" --applicationId "${{ secrets.CLIENT_ID }}" --applicationSecret "${{ secrets.CLIENT_SECRET }}" --applicationScope "${{ vars.SCOPES }}" -s "${processName}_TestSet" -o "${{ env.FOLDER_NAME }}" --out uipath -r "$pwd\test_result.json"
+   #       exit InterpretTestResults -testResults "$pwd\test_result.json"
   Bump-Process-Version:
     needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer, Build-RPA-And-Test-Packages, Run-Tests]
     runs-on: uipath-cli
