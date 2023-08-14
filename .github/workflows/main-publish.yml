@@ -177,7 +177,7 @@ jobs:
         shell: pwsh
         run: |
           . .\CiCd\CiCdFunctions.ps1
-          UploadPackageToFolder -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_PATH }}
+          UploadPackageToOrchestrator -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -filePath ${{ env.NUGET_PATH }}
      # - name: Upload test package to Orchestrator
      #   shell: pwsh
      #   run: |

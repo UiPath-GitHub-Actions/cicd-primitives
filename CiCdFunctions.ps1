@@ -62,7 +62,7 @@ function AuthenticateToCloudAndGetBearerTokenClientCredentials([string]$clientId
 
 function GetFolderId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$folderName) {
     $result = GetOrchApi -bearerToken $bearerToken -uri "$($orchestratorApiBaseUrl)/odata/Folders?%24filter=FullyQualifiedName%20eq%20'$($folderName)'"
-    Write-Host $result.value[0]
+    $debugFolderID = $result.value[0]
     return $result.value[0].Id.ToString()
 }
 
