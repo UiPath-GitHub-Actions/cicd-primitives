@@ -52,7 +52,9 @@ jobs:
         run: |
           . .\CiCd\CiCdFunctions.ps1
           $processName = GetProcessName
+          $processVersion = GetProcessVersion
           "DEBUG_PROCESS_NAME=$processName" >> $env:GITHUB_OUTPUT
+          "DEBUG_PROCESS_VERSION=$processVersion" >> $env:GITHUB_OUTPUT
           Write-Host "Building $processName for environment: ${{ inputs.environment }}"
       - name: Get environment variables
         id: envvars
