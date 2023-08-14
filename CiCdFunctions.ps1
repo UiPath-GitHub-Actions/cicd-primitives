@@ -71,11 +71,11 @@ function GetProcessId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [st
     return $result.value[0].Id.ToString()
 }
 
-function GetFolderFeedId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$folderId) {
-    $result = GetOrchApi -bearerToken $bearerToken -uri "$($orchestratorApiBaseUrl)/api/PackageFeeds/GetFolderFeed?folderId=$($folderId)"
-    if ($null -eq $result) {$result = "1.0.0"}
-    return $result.ToString()
-}
+#function GetFolderFeedId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$folderId) {
+#    $result = GetOrchApi -bearerToken $bearerToken -uri "$($orchestratorApiBaseUrl)/api/PackageFeeds/GetFolderFeed?folderId=$($folderId)"
+#    if ($null -eq $result) {$result = "1.0.0"}
+#    return $result.ToString()
+#}
 
 # Legacy: don't touch
 function GetFinalVersionProcess([string]$orchestratorApiBaseUrl, [string]$bearerToken) {
@@ -148,14 +148,14 @@ function UploadPackageToOrchestrator([string]$orchestratorApiBaseUrl, [string]$b
     $response = Invoke-RestMethod -Uri $uri -Method Post -Form $Form -Headers $headers -ContentType "multipart/form-data"
 }
 
-function UploadPackageToFolder([string]$orchestratorApiBaseUrl, [string]$folderName, [string]$bearerToken, [string]$filePath) {
+function UploadPackageToFolder([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$filePath) {
     $tenantName = ExtractTenantNameFromUri -uri $orchestratorApiBaseUrl
     
     $folderId = GetFolderId -orchestratorApiBaseUrl "$($orchestratorApiBaseUrl)" -bearerToken "$($bearerToken)" -folderName "$($folderName)"
-    $feedId = GetFolderFeedId -orchestratorApiBaseUrl "$($orchestratorApiBaseUrl)" -bearerToken "$($bearerToken)" -folderId "$($folderId)"
+    #$feedId = GetFolderFeedId -orchestratorApiBaseUrl "$($orchestratorApiBaseUrl)" -bearerToken "$($bearerToken)" -folderId "$($folderId)"
     
     $headers = @{"Authorization"="Bearer $($bearerToken)"; "X-UIPATH-TenantName"="$($tenantName)"}
-    $uri = "$($orchestratorApiBaseUrl)/odata/Processes/UiPath.Server.Configuration.OData.UploadPackage()?feedId=$($feedId)"
+    $uri = "$($orchestratorApiBaseUrl)/odata/Processes/UiPath.Server.Configuration.OData.UploadPackage"
     $Form = @{
         file = Get-Item -Path $filePath
     }
