@@ -104,7 +104,7 @@ jobs:
         run: |
           . .\CiCd\CiCdFunctions.ps1
           $enforceStrictVersioning = ("${{ vars.ENFORCE_STRICT_VERSIONING }}".Trim() -eq "YES")
-          #$finalVersionProcess = GetFinalVersionProcess -orchestratorApiBaseUrl "${{ env.BASE_URL }}" -bearerToken "${{ env.BEAR_TOK }}" 
+          $finalVersionProcess = GetFinalVersionProcess -orchestratorApiBaseUrl "${{ env.BASE_URL }}" -bearerToken "${{ env.BEAR_TOK }}" 
           "FINAL_VERSION_PROCESS=$finalVersionProcess" >> $env:GITHUB_ENV
           "finalVersionProcess=$finalVersionProcess" >> $env:GITHUB_OUTPUT
           "PROCESS_NNAME=$processName" >> $env:GITHUB_OUTPUT
