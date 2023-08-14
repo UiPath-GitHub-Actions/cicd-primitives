@@ -194,7 +194,7 @@ jobs:
    #       uipcli test run "${{ vars.BASE_URL }}" "${{ env.TENANT_NAME }}" --accountForApp "${{ vars.ORG_NAME }}" --applicationId "${{ secrets.CLIENT_ID }}" --applicationSecret "${{ secrets.CLIENT_SECRET }}" --applicationScope "${{ vars.SCOPES }}" -s "${processName}_TestSet" -o "${{ env.FOLDER_NAME }}" --out uipath -r "$pwd\test_result.json"
    #       exit InterpretTestResults -testResults "$pwd\test_result.json"
   Bump-Process-Version:
-    needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer, Build-RPA-And-Test-Packages, Run-Tests]
+    needs: [Prepare-Environment, Run-Checks-And-Workflow-Analyzer, Build-RPA-And-Test-Packages]
     runs-on: uipath-cli
     env:
       BASE_URL: ${{needs.Prepare-Environment.outputs.baseurl}}
