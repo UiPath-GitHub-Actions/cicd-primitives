@@ -104,6 +104,8 @@ jobs:
           #$finalVersionProcess = GetFinalVersionProcess -orchestratorApiBaseUrl "${{ env.BASE_URL }}" -bearerToken "${{ env.BEAR_TOK }}" -enforceStrictVersioning $enforceStrictVersioning
           "FINAL_VERSION_PROCESS=$finalVersionProcess" >> $env:GITHUB_ENV
           "finalVersionProcess=$finalVersionProcess" >> $env:GITHUB_OUTPUT
+          "PROCESS_NNAME=$processName" >> $env:GITHUB_OUTPUT
+          "INTERIM_PROCESS_VERSION=$processVersion" >> $env:GITHUB_OUTPUT
       - name: Run workflow analyzer
         shell: pwsh
         run: |

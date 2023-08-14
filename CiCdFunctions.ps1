@@ -80,9 +80,7 @@ function GetProcessId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [st
 # Legacy: don't touch
 function GetFinalVersionProcess([string]$orchestratorApiBaseUrl, [string]$bearerToken) {
     $processName = GetProcessName
-    ECHO $processName
     $processVersion = GetProcessVersion
-    ECHO $processVersion
     
     $uri = "$($orchestratorApiBaseUrl)/odata/Processes/UiPath.Server.Configuration.OData.GetProcessVersions(processId='$($processName)')?`$filter=startswith(Version,'$($processVersion)')&`$orderby=Published%20desc"
     $result = GetOrchApi -bearerToken $bearerToken -uri $uri # -debug $true
