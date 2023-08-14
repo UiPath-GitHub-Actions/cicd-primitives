@@ -177,6 +177,7 @@ function GetUrlOrchestratorApiBaseCloud([string]$baseUrl, [string]$organizationI
 
 function GetProcessName() {
     $projectJson = Get-Content .\project.json -Raw | ConvertFrom-Json
+    Write-Host $projectJson.name
     return $projectJson.name
 }
 
