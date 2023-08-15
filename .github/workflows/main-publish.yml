@@ -6,9 +6,9 @@ on:
       environment:
         required: true
         type: string
-      folder_dev:
-        required: true
-        type: string
+      #folder_dev:
+      #  required: true
+      #  type: string
       folder_prd:
         required: true
         type: string
