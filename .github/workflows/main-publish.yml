@@ -227,6 +227,7 @@ jobs:
           $processName = GetProcessName
           "DEBUG_PROCESS_NAME_PROCESSID=$processName" >> $env:GITHUB_OUTPUT
           $processId = GetProcessId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId "${{ env.FOLDER_ID }}" -processName "$processName"
+          "DEBUF_PROCESS_ID=$processId" >> $env:GITHUB_OUTPUT
           "PROCESS_ID=$processId" >> $env:GITHUB_ENV
           
       - name: Bump Process Version to the Latest
