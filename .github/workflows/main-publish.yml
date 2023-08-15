@@ -224,7 +224,8 @@ jobs:
         shell: pwsh
         run: |
           . .\CiCd\CiCdFunctions.ps1
-          $processName = GetProcessName; $processId = GetProcessId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId "${{ env.FOLDER_ID }}" -processName "$processName"
+          $processName = GetProcessName
+          $processId = GetProcessId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId "${{ env.FOLDER_ID }}" -processName "$processName"
           "PROCESS_ID=$processId" >> $env:GITHUB_ENV
           "TESTPROCESSNAME_ID=$processName" >> $env:GITHUB_OUTPUT
       - name: Bump Process Version to the Latest
