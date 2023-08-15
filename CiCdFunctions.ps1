@@ -1,7 +1,7 @@
 
 # Base WebRequest verbs
 
-function GetOrchApi([string]$bearerToken, [string]$uri, $headers = $null, [string]$contentType = "application/json", [bool]$debug = $true) {
+function GetOrchApi([string]$bearerToken, [string]$uri, $headers = $null, [string]$contentType = "application/json", [bool]$debug = $false) {
     $tenantName = ExtractTenantNameFromUri -uri $uri
     if($debug) {
         Write-Host $uri
