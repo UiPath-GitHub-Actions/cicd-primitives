@@ -224,6 +224,7 @@ jobs:
         shell: pwsh
         run: |
           . .\CiCd\CiCdFunctions.ps1
+          $ErrorView = "NormalView"
           $processName = GetProcessName
           "DEBUG_PROCESS_ID=$processId" >> $env:GITHUB_OUTPUT
           $processId = GetProcessId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderId "${{ env.FOLDER_ID }}" -processName "$processName"
