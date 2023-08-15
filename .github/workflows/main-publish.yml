@@ -27,6 +27,7 @@ jobs:
            repository: Test-Organisation-FCC/cicd-primitives
            ref: main
            path: CiCd
+           fetch-depth: 0
       - name: Display SHA of commit
         shell: pwsh
         run: Write-Host ( "Change in branch? ${{ github.head_ref || github.ref_name }}" + " ${{github.sha}}".Substring(0, 8) )
