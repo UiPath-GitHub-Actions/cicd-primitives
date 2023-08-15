@@ -69,7 +69,7 @@ function GetFolderId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [str
 function GetProcessId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [string]$folderId, [string]$processName) {
    $ErrorView = "NormalView"
    $headers = @{"Authorization"="Bearer $($bearerToken)"; "X-UIPATH-OrganizationUnitId"="$($folderId)"}
-   $result = GetOrchApi -bearerToken $bearerToken -headers $headers -uri "$($orchestratorApiBaseUrl)/odata/Releases"
+   $result = GetOrchApi -bearerToken $bearerToken -headers $headers -uri "$($orchestratorApiBaseUrl)/odata/Releases?%24filter=ProcessKey%20eq%20'$($processName)'"
    return $result
    #?%24filter=Name%20eq%20'$($processName)'
     
