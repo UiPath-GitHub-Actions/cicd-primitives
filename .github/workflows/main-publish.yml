@@ -218,7 +218,7 @@ jobs:
         shell: pwsh
         run: |
           . .\CiCd\CiCdFunctions.ps1
-          $folderId = GetFolderId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderName "${{ env.FOLDER_NAME }}"
+          $folderId = GetFolderId  -orchestratorApiBaseUrl ${{ env.BASE_URL }} -bearerToken ${{ env.BEAR_TOK }} -folderName "${{ env.FOLDER_NAME }}" -processName "$processName"
           "FOLDER_ID=$folderId" >> $env:GITHUB_ENV
       - name: Get Process ID from Name
         shell: pwsh
