@@ -24,7 +24,7 @@ jobs:
       - name: Checkout the latest version of the CiCd primitives
         uses: actions/checkout@v3
         with:
-           repository: Test-Organisation-FCC/cicd-primitives
+           repository: UiPath-GitHub-Actions/cicd-primitives
            ref: main
            path: CiCd
            fetch-depth: 0
