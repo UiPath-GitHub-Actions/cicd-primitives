@@ -72,7 +72,7 @@ function GetProcessId([string]$orchestratorApiBaseUrl, [string]$bearerToken, [st
     $headers = @{"Authorization"="Bearer $($bearerToken)"; "X-UIPATH-OrganizationUnitId"="$($folderId)"}
     $result = GetOrchApi -bearerToken $bearerToken -headers $headers -uri "$($orchestratorApiBaseUrl)/odata/Releases?%24filter=Name%20eq%20'$($processName)'"
     return $result
-    #return $result.value[0].Id.ToString()
+    
     
 }
 
