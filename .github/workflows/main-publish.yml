@@ -51,19 +51,19 @@ jobs:
       - name: Show changed folders
         shell: pwsh 
         run: |
-          $changed_files = git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }}
-          $changed_folders = @()
-          Write-Host ($changed_files)
+          $changed_files = git diff-tree --no-commit-id --name-only -r ${{ github.sha }}
+          $changed_dirs = @{}
 
-          foreach ($file in $changed_files) {
-            $folder = Split-Path $file -Parent
-            $changed_folders += $folder
+          foreach ($file in $changed_files -split "`n") {
+            if ($file -match ".*/.*") {
+              $dir = $file -replace "/[^/]*$", ""
+              $changed_dirs[$dir] = $true
+            } else {
+              $changed_dirs["."] = $true
+            }
           }
 
-          $changed_folders = $changed_folders | Sort-Object | Get-Unique
-          $changed_folders.ForEach({
-            Write-Host $_
-          })
+          $changed_dirs.Keys
         
 
       - name: Display project and environment name
