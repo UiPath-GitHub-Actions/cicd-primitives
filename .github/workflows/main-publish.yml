@@ -51,6 +51,7 @@ jobs:
       - name: Show changed folders
         shell: pwsh 
         run: |
+          ECHO ${{ github.event.pull_request.head.sha }}
           $changed_files = git diff-tree --no-commit-id --name-only -r ${{ github.event.pull_request.head.sha }}
           $changed_dirs = @{}
           $changed_dirs_count = 0
