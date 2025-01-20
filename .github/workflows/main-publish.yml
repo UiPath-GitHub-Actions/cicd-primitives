@@ -63,7 +63,7 @@ jobs:
               $changed_dirs["."] = $true
             }
           }
-          ECHo $changed_files
+          ECHO $changed_files
           ECHO $changed_dirs_count
           ECHO $changed_dirs.Keys 
       - name: Display project and environment name
