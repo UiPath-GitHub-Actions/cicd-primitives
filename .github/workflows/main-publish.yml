@@ -51,7 +51,7 @@ jobs:
       - name: Show changed folders
         shell: pwsh 
         run: |
-          $changed_files = git diff --name-only origin/${{ github.base_ref }}..${{ github.head_ref }}
+          $changed_files = git diff --name-only ${{ github.base_ref }}..${{ github.head_ref }}
           $changed_folders = @()
 
           foreach ($file in $changed_files) {
