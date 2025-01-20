@@ -48,18 +48,22 @@ jobs:
         continue-on-error: false
         shell: pwsh
         run: dir
-      - name: Show changes
+      - name: Show changed folders
+        shell: pwsh 
         run: |
-          $changed_dirs = git diff --dirstat=files,0 origin/${{ github.base_ref }}..${{ github.head_ref }} `
-          | ForEach-Object {
-            $parts = $_ -split "\s+", 3
-            $parts[2]
+          $changed_files = git diff --name-only origin/${{ github.base_ref }}..${{ github.head_ref }}
+          $changed_folders = @()
+
+          foreach ($file in $changed_files) {
+            $folder = Split-Path $file -Parent
+            $changed_folders += $folder
           }
-          
-          $changed_dirs.ForEach({
+
+          $changed_folders = $changed_folders | Sort-Object | Get-Unique
+          $changed_folders.ForEach({
             Write-Host $_
           })
-        shell: pwsh 
+        
 
       - name: Display project and environment name
         shell: pwsh
