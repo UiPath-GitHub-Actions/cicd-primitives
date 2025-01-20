@@ -48,14 +48,18 @@ jobs:
         continue-on-error: false
         shell: pwsh
         run: dir
-      - name: Get Changed Directories
+      - name: Show changes
         run: |
-          echo "changed_dirs<<EOF" >> $GITHUB_ENV
-          git diff --dirstat=files,0 origin/${{ github.base_ref }}..${{ github.head_ref }} \
-            | awk '{print $2}' >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          echo "Following directories has been changed:"
-          cat ${{ env.changed_dirs }} 
+          $changed_dirs = git diff --dirstat=files,0 origin/${{ github.base_ref }}..${{ github.head_ref }} `
+          | ForEach-Object {
+            $parts = $_ -split "\s+", 3
+            $parts[2]
+          }
+          
+          $changed_dirs.ForEach({
+            Write-Host $_
+          })
+        shell: pwsh 
 
       - name: Display project and environment name
         shell: pwsh
