@@ -63,7 +63,7 @@ jobs:
             }
           }
 
-          $changed_dirs.Keys
+          Write-Host ($changed_dirs.Keys)
         
 
       - name: Display project and environment name
