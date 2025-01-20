@@ -48,6 +48,15 @@ jobs:
         continue-on-error: false
         shell: pwsh
         run: dir
+      - name: Get Changed Directories
+        run: |
+          echo "changed_dirs<<EOF" >> $GITHUB_ENV
+          git diff --dirstat=files,0 origin/${{ github.base_ref }}..${{ github.head_ref }} \
+            | awk '{print $2}' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "Following directories has been changed:"
+          cat ${{ env.changed_dirs }} 
+
       - name: Display project and environment name
         shell: pwsh
         run: |
